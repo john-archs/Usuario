@@ -75,6 +75,10 @@ function decodificar(texto){
     };
 }
 
+function primeiroNome(nome){
+    return (nome || "").trim().split(" ")[0];
+}
+
 function calcularDiasRestantes(vencimento){
     const hoje = new Date();
     const [ano,mes,dia] = vencimento.split("-").map(Number);
@@ -116,7 +120,7 @@ function carregar(){
     const temWhatsapp = !!(configCompartilhada.whatsappSuporte || "").replace(/\D/g,"");
 
     container.innerHTML = `
-        <h1>Olá, ${cliente.nome}!</h1>
+        <h1>Olá, ${primeiroNome(cliente.nome)}!</h1>
         <div style="text-align:center;"><span class="status ${statusClasse}">${statusTexto}</span></div>
         <div class="linha"><span>Plano</span><span>${cliente.plano || "-"}</span></div>
         <div class="linha"><span>Valor</span><span>${cliente.valor || "-"}</span></div>
