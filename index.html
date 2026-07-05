@@ -39,17 +39,24 @@ button{width:100%;padding:12px;border:none;border-radius:10px;margin-bottom:10px
    Edite aqui sua chave Pix e contatos de suporte.
 ══════════════════════════════════════════════════════════ */
 const CONFIG = {
-    pixChave: "hypertv1000@gmail.com",
-    pixNome: "Johnny Mary Felix",
-    pixBanco: "Nubank",
-    whatsappSuporte: "558491815446", // código do país + DDD, só números
-    telegramLink: "https://t.me/hypertv_1000",
+    pixChave: "sua-chave-pix-aqui",
+    pixNome: "Seu Nome",
+    pixBanco: "Nome do Banco",
+    whatsappSuporte: "5582900000000", // código do país + DDD, só números
+    telegramLink: "https://t.me/seuusuario",
     nomeSistema: "Área do Cliente"
 };
 /* ══════════════════════════════════════════════════════════ */
 
 function decodificar(texto){
-    return JSON.parse(decodeURIComponent(escape(atob(texto))));
+    // Formato compacto: nome|plano|valor|vencimento
+    const partes = decodeURIComponent(escape(atob(texto))).split("|");
+    return {
+        nome: partes[0] || "",
+        plano: partes[1] || "",
+        valor: partes[2] || "",
+        vencimento: partes[3] || ""
+    };
 }
 
 function calcularDiasRestantes(vencimento){
