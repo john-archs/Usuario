@@ -15,6 +15,10 @@ h1{color:#38bdf8;font-size:20px;margin-bottom:18px;text-align:center;}
 .vencendo{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3);}
 .linha{display:flex;justify-content:space-between;font-size:14px;color:#94a3b8;margin-bottom:8px;}
 .linha span{color:#cbd5e1;}
+.linha-copia{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;color:#94a3b8;margin-bottom:8px;}
+.linha-copia .valor-com-botao{display:flex;align-items:center;gap:8px;overflow:hidden;}
+.linha-copia .dado-valor{color:#cbd5e1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.btn-copiar-mini{width:auto;flex-shrink:0;padding:6px 10px;margin-bottom:0;font-size:12px;border-radius:8px;border:none;background:#334155;color:white;cursor:pointer;font-weight:bold;}
 .pix-box{background:#0f172a;border-radius:10px;padding:12px;margin:14px 0;}
 .pix-chave{font-size:14px;color:#4ade80;word-break:break-all;margin-bottom:8px;}
 button{width:100%;padding:12px;border:none;border-radius:10px;margin-bottom:10px;font-size:15px;cursor:pointer;font-weight:bold;}
@@ -65,13 +69,15 @@ function obterDadosPix(){
 }
 
 function decodificar(texto){
-    // Formato compacto: nome|plano|valor|vencimento
+    // Formato compacto: nome|plano|valor|vencimento|usuario|senha
     const partes = decodeURIComponent(escape(atob(texto))).split("|");
     return {
         nome: partes[0] || "",
         plano: partes[1] || "",
         valor: partes[2] || "",
-        vencimento: partes[3] || ""
+        vencimento: partes[3] || "",
+        usuario: partes[4] || "",
+        senha: partes[5] || ""
     };
 }
 
@@ -133,6 +139,25 @@ function carregar(){
         <div class="linha"><span>Valor</span><span>${cliente.valor || "-"}</span></div>
         <div class="linha"><span>Vencimento</span><span>${formatarData(cliente.vencimento)}</span></div>
 
+        ${cliente.usuario ? `
+        <div class="linha-copia">
+            <span>Usuário</span>
+            <span class="valor-com-botao">
+                <span class="dado-valor">${cliente.usuario}</span>
+                <button class="btn-copiar-mini" onclick="copiarCampo('usuario')">📋</button>
+            </span>
+        </div>
+        ` : ""}
+        ${cliente.senha ? `
+        <div class="linha-copia">
+            <span>Senha</span>
+            <span class="valor-com-botao">
+                <span class="dado-valor">${cliente.senha}</span>
+                <button class="btn-copiar-mini" onclick="copiarCampo('senha')">📋</button>
+            </span>
+        </div>
+        ` : ""}
+
         ${temPix ? `
         <div class="pix-box">
             <div class="linha"><span>Chave Pix</span></div>
@@ -144,6 +169,20 @@ function carregar(){
 
         ${temWhatsapp ? `<button class="btn-whats" onclick="abrirWhatsapp()">💬 Falar no WhatsApp</button>` : ""}
     `;
+}
+
+function copiarCampo(campo){
+    const valor = (cliente && cliente[campo]) || "";
+    if(!valor) return;
+    navigator.clipboard.writeText(valor).then(mostrarToast).catch(()=>{
+        const temp = document.createElement("textarea");
+        temp.value = valor;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand("copy");
+        document.body.removeChild(temp);
+        mostrarToast();
+    });
 }
 
 function copiarPix(){
