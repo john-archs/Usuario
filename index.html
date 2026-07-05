@@ -20,7 +20,6 @@ h1{color:#38bdf8;font-size:20px;margin-bottom:18px;text-align:center;}
 button{width:100%;padding:12px;border:none;border-radius:10px;margin-bottom:10px;font-size:15px;cursor:pointer;font-weight:bold;}
 .btn-copiar{background:#334155;color:white;}
 .btn-whats{background:#25d366;color:white;}
-.btn-telegram{background:#229ED9;color:white;}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#22c55e;color:white;padding:10px 18px;border-radius:10px;font-size:13px;display:none;}
 .erro-box{text-align:center;color:#f87171;}
 </style>
@@ -36,17 +35,34 @@ button{width:100%;padding:12px;border:none;border-radius:10px;margin-bottom:10px
 <script>
 /* ══════════════════════════════════════════════════════════
    CONFIGURAÇÃO FIXA (igual para todos os clientes).
-   Edite aqui sua chave Pix e contatos de suporte.
+   Edite aqui apenas o nome do sistema.
+   Os dados de Pix e o WhatsApp de Suporte são lidos automaticamente
+   das configurações salvas pelo Gestor de Clientes (mesmo localStorage/origem).
 ══════════════════════════════════════════════════════════ */
 const CONFIG = {
-    pixChave: "hypertv1000@gmail.com",
-    pixNome: "Johnny Mary Felix",
-    pixBanco: "Nubank",
-    whatsappSuporte: "558491815446", // código do país + DDD, só números
-    telegramLink: "https://t.me/hypertv_1000",
     nomeSistema: "Área do Cliente"
 };
 /* ══════════════════════════════════════════════════════════ */
+
+function obterConfigCompartilhada(){
+    // Lê as configurações salvas pelo Gestor de Clientes
+    // (https://john-archs.github.io/GestorClientes/), que usa o mesmo
+    // domínio/origem, e por isso compartilha o mesmo localStorage.
+    try{
+        return JSON.parse(localStorage.getItem("configuracoes")) || {};
+    }catch(erro){
+        return {};
+    }
+}
+
+function obterDadosPix(){
+    const config = obterConfigCompartilhada();
+    return {
+        pixChave: config.pixChave || "",
+        pixNome: config.pixNome || "",
+        pixBanco: config.pixBanco || ""
+    };
+}
 
 function decodificar(texto){
     // Formato compacto: nome|plano|valor|vencimento
@@ -94,6 +110,11 @@ function carregar(){
 
     document.title = CONFIG.nomeSistema;
 
+    const pix = obterDadosPix();
+    const temPix = !!(pix.pixChave || pix.pixNome || pix.pixBanco);
+    const configCompartilhada = obterConfigCompartilhada();
+    const temWhatsapp = !!(configCompartilhada.whatsappSuporte || "").replace(/\D/g,"");
+
     container.innerHTML = `
         <h1>Olá, ${cliente.nome}!</h1>
         <div style="text-align:center;"><span class="status ${statusClasse}">${statusTexto}</span></div>
@@ -101,22 +122,24 @@ function carregar(){
         <div class="linha"><span>Valor</span><span>${cliente.valor || "-"}</span></div>
         <div class="linha"><span>Vencimento</span><span>${cliente.vencimento || "-"}</span></div>
 
+        ${temPix ? `
         <div class="pix-box">
             <div class="linha"><span>Chave Pix</span></div>
-            <div class="pix-chave" id="pixChave">${CONFIG.pixChave}</div>
-            <div class="linha"><span>${CONFIG.pixNome} • ${CONFIG.pixBanco}</span></div>
+            <div class="pix-chave" id="pixChave">${pix.pixChave}</div>
+            <div class="linha"><span>${pix.pixNome}${pix.pixNome && pix.pixBanco ? " • " : ""}${pix.pixBanco}</span></div>
             <button class="btn-copiar" onclick="copiarPix()">📋 Copiar chave Pix</button>
         </div>
+        ` : ""}
 
-        <button class="btn-whats" onclick="abrirWhatsapp()">💬 Falar no WhatsApp</button>
-        <button class="btn-telegram" onclick="abrirTelegram()">✈️ Falar no Telegram</button>
+        ${temWhatsapp ? `<button class="btn-whats" onclick="abrirWhatsapp()">💬 Falar no WhatsApp</button>` : ""}
     `;
 }
 
 function copiarPix(){
-    navigator.clipboard.writeText(CONFIG.pixChave).then(mostrarToast).catch(()=>{
+    const pix = obterDadosPix();
+    navigator.clipboard.writeText(pix.pixChave).then(mostrarToast).catch(()=>{
         const temp = document.createElement("textarea");
-        temp.value = CONFIG.pixChave;
+        temp.value = pix.pixChave;
         document.body.appendChild(temp);
         temp.select();
         document.execCommand("copy");
@@ -132,13 +155,11 @@ function mostrarToast(){
 }
 
 function abrirWhatsapp(){
-    const numero = (CONFIG.whatsappSuporte || "").replace(/\D/g,"");
+    const config = obterConfigCompartilhada();
+    const numero = (config.whatsappSuporte || "").replace(/\D/g,"");
+    if(!numero) return;
     const mensagem = `Olá! Sou ${cliente.nome}, meu plano é ${cliente.plano}. Gostaria de falar sobre minha assinatura.`;
     window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`, "_blank");
-}
-
-function abrirTelegram(){
-    window.open(CONFIG.telegramLink || "", "_blank");
 }
 
 carregar();
